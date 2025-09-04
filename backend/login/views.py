@@ -1,12 +1,12 @@
 from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.permissions import AllowAny
-from django.contrib.auth import authenticate
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from django.contrib.auth.hashers import make_password, check_password
 from rest_framework_simplejwt.tokens import RefreshToken
 from .models import User, LoginLog
 from django_user_agents.utils import get_user_agent
+from .permissions import IsStudent, IsTeacher
 
 
 class RegisterView(APIView):
@@ -28,7 +28,6 @@ class RegisterView(APIView):
         return Response({"success": True, "message": f"{role.capitalize()} created successfully"})
 
 
-
 class LoginView(APIView):
     permission_classes = [AllowAny]
 
@@ -37,7 +36,7 @@ class LoginView(APIView):
         password = request.data.get("password")
 
         try:
-            user= User.objects.get(username=username)
+            user = User.objects.get(username=username)
         except User.DoesNotExist:
             return Response({"success": False, "message": "Invalid username or password"}, status=401)
         
@@ -46,7 +45,6 @@ class LoginView(APIView):
         
         # Generate JWT token
         refresh = RefreshToken.for_user(user)
-
 
         # Log login details
         ip = request.META.get("REMOTE_ADDR")
@@ -66,3 +64,18 @@ class LoginView(APIView):
             "username": user.username,
             "role": user.role
         })
+
+
+# 🔹 Role-based Views
+
+class StudentDashboard(APIView):
+    permission_classes = [IsAuthenticated, IsStudent]
+
+    def get(self, request):
+        return Response({"message": f"Welcome Student {request.user.username}!"})
+
+class TeacherDashboard(APIView):
+    permission_classes = [IsAuthenticated, IsTeacher]
+
+    def get(self, request):
+        return Response({"message": f"Welcome Teacher {request.user.username}!"})

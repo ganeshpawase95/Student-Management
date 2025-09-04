@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib import admin
 
 # Create your models here.
 class User(models.Model):
@@ -24,3 +25,7 @@ class LoginLog(models.Model):
 
     def __str__(self):
         return f"{self.user.username} logged in at {self.login_time}"
+    
+
+admin.site.register(User)
+admin.site.register(LoginLog)
